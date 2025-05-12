@@ -178,18 +178,20 @@ jobs:
 
       - name: Configure SSH
         run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-        chmod 700 ~/.ssh
-        chmod 600 ~/.ssh/id_ed25519
-        cat << EOF > ~/.ssh/config
-        Host github.com
-          HostName github.com
-          User git
-          IdentityFile ~/.ssh/id_ed25519
-          IdentitiesOnly yes
-        EOF
-        ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          tmpfile=$(mktemp)
+          logfile=$(mktemp)
+          ssh-keyscan -Hv github.com > "$tmpfile" 2>"$logfile"
+          cat "$tmpfile" >> ~/.ssh/known_hosts
+          rm -f "$tmpfile" "$logfile"
+          echo "=== SSH config ==="
+          cat ~/.ssh/config 2>/dev/null || true
+          echo "=== Known hosts ==="
+          cat ~/.ssh/known_hosts
+
 
       - name: Checkout code via SSH
         run: |
